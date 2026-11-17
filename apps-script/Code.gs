@@ -23,6 +23,7 @@ function doPost(e){
   var lock=LockService.getScriptLock();
   try{
     var d=JSON.parse(e.postData.contents);
+    if(d.action==="checkin") return checkin(d,lock);
     if(d.action!=="register") return out({ok:false});
     var name=String(d.name||"").trim(),email=String(d.email||"").trim(),phone=String(d.phone||"").trim();
     if(!name||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)||phone.length<7) return out({ok:false});
@@ -63,4 +64,20 @@ function sendTicket(code,name,email){
   +'<p>Show this QR code or your ticket number at the entrance. Our team will scan it to confirm your attendance.</p>'
   +'<p>See you there!<br><b>The Wisp Team</b></p></div></div>';
   MailApp.sendEmail({to:email,subject:"Your ticket for "+EVENT.name+" — "+code,htmlBody:html,name:"Wisp's Workshop",inlineImages:{qr:qr}});
+}
+
+// Door check-in. Needs Script Property CHECKIN_PIN (Project Settings > Script properties).
+function checkin(d,lock){
+  var pin=PropertiesService.getScriptProperties().getProperty("CHECKIN_PIN");
+  if(!pin||String(d.pin)!==pin) return out({ok:false,result:"badpin"});
+  var code=String(d.code||"").trim().toUpperCase();
+  if(!/^PS-[A-Z0-9]{6}$/.test(code)) return out({ok:true,result:"invalid"});
+  lock.waitLock(20000);
+  var sh=sheet(),f=sh.createTextFinder(code).matchEntireCell(true).findNext();
+  if(!f||f.getColumn()!==1||f.getRow()<2) return out({ok:true,result:"invalid"});
+  var row=sh.getRange(f.getRow(),1,1,8).getValues()[0],info={ok:true,code:code,name:row[1]};
+  if(row[5]!=="Paid"){info.result="unpaid";return out(info)}
+  if(row[7]==="Yes"){info.result="used";return out(info)}
+  sh.getRange(f.getRow(),8).setValue("Yes");
+  info.result="valid";return out(info);
 }

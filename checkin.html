@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Paint &amp; Sip · Check-in</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<style>
+body{margin:0;font-family:system-ui,sans-serif;background:#222;color:#fff;text-align:center}
+.wrap{max-width:480px;margin:0 auto;padding:20px}
+h1{font-size:20px;margin:6px 0 14px}
+#reader{border-radius:12px;overflow:hidden;background:#000}
+input,button{font:inherit;padding:13px;border-radius:10px;border:0;width:100%;margin-top:10px}
+button{background:#f4978e;color:#3a1d1d;font-weight:600;cursor:pointer}
+#res{display:none;border-radius:16px;padding:28px 16px;margin-top:14px}
+#res.valid{background:#1e8e3e}#res.bad{background:#c5221f}#res.warn{background:#b06000}
+#big{font-size:34px;font-weight:700}
+#code{font:700 26px ui-monospace,Menlo,monospace;letter-spacing:.1em;margin:10px 0 4px}
+#nm{font-size:20px}
+.row{display:flex;gap:8px}.row input{flex:1}.row button{width:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Paint &amp; Sip · Check-in</h1>
+  <input id="pin" type="password" placeholder="Staff PIN" autocomplete="off">
+  <div id="reader" style="margin-top:10px"></div>
+  <div class="row"><input id="manual" placeholder="Or type ticket code (PS-XXXXXX)" autocapitalize="characters"><button id="mbtn">Check</button></div>
+  <div id="res" role="status"><div id="big"></div><div id="code"></div><div id="nm"></div><button id="next">Scan next</button></div>
+</div>
+<script>
+var SCRIPT_URL="https://script.google.com/macros/s/AKfycbysmE6JoNRjIZuYhSYhL10q7AxvgQduMNHfpQGkeWGNNnAxDhgx1j05qV76-OgzhMmj/exec";
+var $=function(i){return document.getElementById(i)},busy=false,scanner;
+try{$("pin").value=localStorage.getItem("ps_pin")||""}catch(e){}
+var MSG={valid:["✅ VALID","valid"],used:["⚠️ ALREADY USED","warn"],unpaid:["❌ NOT PAID","bad"],invalid:["❌ INVALID TICKET","bad"],badpin:["❌ WRONG PIN","bad"],error:["⚠️ NETWORK ERROR, TRY AGAIN","warn"]};
+function show(r,d){var m=MSG[r]||MSG.error;$("res").className=m[1];$("res").style.display="block";$("big").textContent=m[0];$("code").textContent=(d&&d.code)||"";$("nm").textContent=(d&&d.name)||"";}
+function check(code){
+  if(busy)return;busy=true;
+  try{localStorage.setItem("ps_pin",$("pin").value)}catch(e){}
+  try{scanner&&scanner.pause(true)}catch(e){}
+  fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"checkin",pin:$("pin").value,code:code})})
+    .then(function(r){return r.json()}).then(function(d){show(d.result,d.code?d:{code:code})})
+    .catch(function(){show("error")});
+}
+$("next").onclick=function(){$("res").style.display="none";busy=false;$("manual").value="";try{scanner&&scanner.resume()}catch(e){}};
+$("mbtn").onclick=function(){var c=$("manual").value.trim();if(c)check(c)};
+scanner=new Html5Qrcode("reader");
+scanner.start({facingMode:"environment"},{fps:10,qrbox:240},function(t){check(t)},function(){}).catch(function(){$("reader").textContent="Camera unavailable. Allow camera access or type the code below."});
+</script>
+</body>
+</html>
