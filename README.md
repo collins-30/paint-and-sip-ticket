@@ -1,32 +1,21 @@
-# Paint & Sip ticket site
+# Paint & Sip ticket site (bank transfer + WhatsApp receipt)
 
-Static page (index.html) + Google Apps Script (apps-script/Code.gs). Payments: Paystack (NGN 16,000).
+Flow: guest registers on the page -> sees bank details + reference -> sends receipt on WhatsApp -> client sets Status to "Paid" in the Google Sheet -> guest is emailed the ticket with QR code.
 
-## 1. Paystack
-- Dashboard > Settings > Preferences / Business: add the settlement account (GTBank, name must match your Paystack KYC name).
-- Settings > API Keys: copy the Public key into `CONFIG.PAYSTACK_PUBLIC_KEY` in index.html. Start with the test key, switch to live after testing.
-- The secret key goes ONLY into Apps Script properties (step 2). Never commit it.
+## 1. Google Sheet + Apps Script
+1. Create a Google Sheet. Extensions > Apps Script. Paste apps-script/Code.gs.
+2. Select the `setup` function and click Run. Allow the permissions (Sheets, Gmail send, external requests). This adds headers, the Pending/Paid dropdown and the email trigger.
+3. Deploy > New deployment > Web app. Execute as: Me. Who has access: Anyone. Copy the Web app URL.
+4. Paste it into `CONFIG.SCRIPT_URL` in index.html.
+5. After any later code change: Deploy > Manage deployments > edit > New version.
+Emails send from the Google account that owns the script (about 100/day on a free account).
 
-## 2. Google Sheet + Apps Script
-1. New Google Sheet > Extensions > Apps Script. Paste apps-script/Code.gs.
-2. Project Settings > Script properties > add `PAYSTACK_SECRET` = your Paystack secret key.
-3. Run `doPost` once (or any function) to grant permissions (Sheets, Gmail send, external requests).
-4. Deploy > New deployment > Web app: Execute as **Me**, Who has access **Anyone**. Copy the Web app URL into `CONFIG.SCRIPT_URL` in index.html.
-5. After any code change: Deploy > Manage deployments > edit > New version.
+## 2. Run locally
+VS Code Live Server on index.html, or `python -m http.server 8000`.
 
-## 3. GitHub + VS Code
-```
-cd paint-and-sip
-git init && git add . && git commit -m "Paint & Sip site"
-git branch -M main
-git remote add origin https://github.com/YOUR_USER/paint-and-sip.git
-git push -u origin main
-```
-Then in VS Code: clone the repo.
+## 3. GitHub + Render (free)
+Push to GitHub. Render > New > Static Site > pick the repo. Build command empty, publish directory `.`
 
-## 4. Render (free)
-New > Static Site > connect the repo. Build command: leave empty. Publish directory: `.`  You get a free yourname.onrender.com link.
-
-## Check-in
-Scan the QR with any scanner app (it reads the ticket code), search the code in the Sheet, and change "Checked in" to Yes.
-Test with Paystack test cards before going live. International cards must be enabled on your Paystack account for guests paying from Cyprus.
+## Event-day routine
+- Client: after seeing the money in her bank, open the Sheet (phone works) and set the guest's Status to Paid. The ticket email goes out within seconds, and "Ticket sent" fills in.
+- Door: scan the QR with any scanner app (it shows the ticket code), search it in the Sheet (Ctrl+F), check it is Paid, and mark "Checked in" Yes.

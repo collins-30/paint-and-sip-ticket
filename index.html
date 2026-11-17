@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Paint &amp; Sip · Wisp’s 1st Edition</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;1,500&family=Jost:wght@400;500&family=Pinyon+Script&display=swap" rel="stylesheet">
-<script src="https://js.paystack.co/v1/inline.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{--bg:#f98483;--bg2:#fb9a98;--ink:#fff;--card:#fff;--cardink:#3a1d1d;--muted:#8a5a5a;--accent:#f4978e;--line:#f3d3d1;color-scheme:light;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -63,13 +61,13 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(-
   </section>
 
   <section class="card" id="formCard" aria-labelledby="f">
-    <h2 id="f">Get your ticket</h2>
+    <h2 id="f">Reserve your spot</h2>
     <form id="reg" novalidate onsubmit="return false">
       <label for="name">Full name</label>
       <input id="name" autocomplete="name" required>
       <label for="email">Email (your ticket is sent here)</label>
       <input id="email" type="email" autocomplete="email" required>
-      <label for="phone">Phone number (WhatsApp if possible)</label>
+      <label for="phone">WhatsApp number</label>
       <input id="phone" type="tel" autocomplete="tel">
       <p class="err" id="err" role="alert"></p>
       <button class="btn" id="go" type="button">Confirm and pay ₦16,000</button>
@@ -88,61 +86,44 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(-
   </section>
 
   <section class="card ticket" id="ticket" aria-live="polite">
-    <h2>Your e-ticket</h2>
-    <p class="sample" id="tmsg">Payment received. Your ticket has also been emailed to you.</p>
-    <div class="code" id="tcode"></div>
-    <div id="qr"></div>
-    <div class="t-det">
-      <dl>
-        <dt>Name</dt><dd id="tname"></dd>
-        <dt>Event</dt><dd>Paint &amp; Sip</dd>
-        <dt>Date</dt><dd>Saturday, 28 November, 6:00 PM</dd>
-        <dt>Venue</dt><dd>Hangar Culture Space, Lefkosa</dd>
-        <dt>Amount</dt><dd>₦16,000</dd>
-      </dl>
-    </div>
-    <p class="note">Show this QR code or your ticket number at the entrance. Our team will scan it to confirm your attendance.</p>
+    <h2>Almost there! Pay to confirm your spot</h2>
+    <p class="sample">Your spot is held once you register. It is confirmed after we receive your payment.</p>
+    <dl class="t-det">
+      <dt>Bank</dt><dd>GTBank</dd>
+      <dt>Account no.</dt><dd>0619196337</dd>
+      <dt>Account name</dt><dd>Jega Hannatu</dd>
+      <dt>Amount</dt><dd>₦16,000</dd>
+      <dt>Reference</dt><dd id="tcode"></dd>
+    </dl>
+    <p class="note">1. Transfer ₦16,000 to the account above and put your reference in the narration if you can.<br>2. Tap the button below and send your payment receipt on WhatsApp.<br>3. Once your payment is confirmed, your ticket with a QR code is emailed to <b id="temail"></b>. Check spam if you don’t see it.</p>
+    <a class="btn" id="wa" href="#" target="_blank" rel="noopener">Send receipt on WhatsApp</a>
   </section>
 
   <p class="contact">Questions? Message <a href="https://instagram.com/wisp_sworkshop">@wisp_sworkshop</a> on Instagram or call +90 533 855 3574</p>
 </main>
 <script>
 var CONFIG={
-  PAYSTACK_PUBLIC_KEY:"pk_test_REPLACE_ME",
   SCRIPT_URL:"PASTE_APPS_SCRIPT_WEB_APP_URL",
-  AMOUNT_NGN:16000
+  WHATSAPP:"905338553574"
 };
 var $=function(i){return document.getElementById(i)};
-function showTicket(code,name,msg){
-  $("formCard").style.display="none";
-  $("tname").textContent=name;$("tcode").textContent=code||"Pending";
-  if(msg)$("tmsg").textContent=msg;
-  var q=$("qr");q.innerHTML="";
-  if(code){try{new QRCode(q,{text:code,width:180,height:180})}catch(x){}}
-  var t=$("ticket");t.classList.add("on");t.scrollIntoView({behavior:"smooth",block:"start"});
-}
-function confirmPayment(ref,name){
-  showTicket("","" + name,"Confirming your payment…");
-  fetch(CONFIG.SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({reference:ref})})
-    .then(function(r){return r.json()})
-    .then(function(d){
-      if(d.ok)showTicket(d.code,name,"Payment confirmed. Your ticket has also been emailed to you.");
-      else showTicket("",name,"We received your payment but could not confirm it automatically. Keep this reference and message us: "+ref);
-    })
-    .catch(function(){showTicket("",name,"Payment received. Your ticket email will arrive shortly. Reference: "+ref)});
-}
 $("go").addEventListener("click",function(){
-  var n=$("name").value.trim(),e=$("email").value.trim(),p=$("phone").value.trim(),err=$("err");
+  var n=$("name").value.trim(),e=$("email").value.trim(),p=$("phone").value.trim(),err=$("err"),b=$("go");
   if(!n){err.textContent="Enter your full name.";return}
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){err.textContent="Enter a valid email address.";return}
-  err.textContent="";
-  var ref="PS"+Date.now()+Math.floor(Math.random()*1e6);
-  PaystackPop.setup({
-    key:CONFIG.PAYSTACK_PUBLIC_KEY,email:e,amount:CONFIG.AMOUNT_NGN*100,currency:"NGN",ref:ref,
-    metadata:{custom_fields:[{display_name:"Name",variable_name:"name",value:n},{display_name:"Phone",variable_name:"phone",value:p}]},
-    callback:function(r){confirmPayment(r.reference,n)},
-    onClose:function(){err.textContent="Payment window closed. Tap the button to try again."}
-  }).openIframe();
+  if(p.length<7){err.textContent="Enter your WhatsApp number.";return}
+  err.textContent="";b.disabled=true;b.textContent="Registering…";
+  fetch(CONFIG.SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"register",name:n,email:e,phone:p})})
+    .then(function(r){return r.json()})
+    .then(function(d){
+      if(!d.ok)throw new Error();
+      $("tcode").textContent=d.ref;$("temail").textContent=e;
+      var msg="Hello, I’m "+n+". I’ve paid ₦16,000 for Paint & Sip (28 Nov). Reference: "+d.ref+". Receipt attached.";
+      $("wa").href="https://wa.me/"+CONFIG.WHATSAPP+"?text="+encodeURIComponent(msg);
+      $("formCard").style.display="none";
+      var t=$("ticket");t.classList.add("on");t.scrollIntoView({behavior:"smooth",block:"start"});
+    })
+    .catch(function(){err.textContent="Something went wrong. Please try again or message us on WhatsApp.";b.disabled=false;b.textContent="Register and get payment details"});
 });
 </script>
 </body>
