@@ -83,9 +83,13 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(-
       <dt>Account no.</dt><dd>0619196337</dd>
       <dt>Account name</dt><dd>Jega Hannatu</dd>
       <dt>Amount</dt><dd>₦16,000</dd>
+      <dt>Or pay in TL</dt><dd>600 TL</dd>
+<dt>Bank</dt><dd>İşbank</dd>
+<dt>IBAN</dt><dd style="overflow-wrap:anywhere">TR64 0006 4000 0016 8060 0476 45</dd>
+<dt>Account name</dt><dd>Onu Mohammed Atabo</dd>
       <dt>Reference</dt><dd id="tcode"></dd>
     </dl>
-    <p class="note">1. Transfer ₦16,000 to the account above and put your reference in the narration if you can.<br>2. Tap the button below and send your payment receipt on WhatsApp.<br>3. Once your payment is confirmed, your ticket with a QR code is emailed to <b id="temail"></b>. Check spam if you don’t see it.</p>
+    <p class="note">1. Transfer ₦16,000 or 600 TL to the account above and put your reference in the narration if you can.<br>2. Tap the button below and send your payment receipt on WhatsApp.<br>3. Once your payment is confirmed, your ticket with a QR code is emailed to <b id="temail"></b>. Check spam if you don’t see it.</p>
     <a class="btn" id="wa" href="#" target="_blank" rel="noopener">Send receipt on WhatsApp</a>
   </section>
 
@@ -108,7 +112,7 @@ $("go").addEventListener("click",function(){
     .then(function(d){
       if(!d.ok)throw new Error();
       $("tcode").textContent=d.ref;$("temail").textContent=e;
-      var msg="Hello, I’m "+n+". I’ve paid ₦16,000 for Paint & Sip (28 Nov). Reference: "+d.ref+". Receipt attached.";
+      var msg="Hello, I’m "+n+". I’ve paid for Paint & Sip (28 Nov). Reference: "+d.ref+". Receipt attached.";
       $("wa").href="https://wa.me/"+CONFIG.WHATSAPP+"?text="+encodeURIComponent(msg);
       $("formCard").style.display="none";
       var t=$("ticket");t.classList.add("on");t.scrollIntoView({behavior:"smooth",block:"start"});
