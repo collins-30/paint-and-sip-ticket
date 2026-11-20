@@ -1,6 +1,6 @@
 // Paint & Sip registrations + tickets. Bind to a Google Sheet (Extensions > Apps Script).
 // Columns: A Ticket/Reference | B Name | C Email | D WhatsApp | E Registered | F Status | G Ticket sent | H Checked in
-var EVENT = {name:"Paint & Sip", when:"Saturday, 28 November 2026, 6:00 PM – 9:00 PM", where:"Hangar Culture Space, Lefkosa", price:"₦16,000"};
+var EVENT = {name:"Paint & Sip", when:"Saturday, 28 November 2026, 6:00 PM – 9:00 PM", where:"Hangar Culture Space, Lefkosa", price:"₦18,600"};
 var STATUS_COL = 6;
 
 function out(o){return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON)}
